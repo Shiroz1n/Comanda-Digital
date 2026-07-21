@@ -86,7 +86,7 @@ const app = new Elysia()
         return registroEncontrado;
     }else {
         db.query(`
-            'INSERT INTO mesas (numeroMesa, estadoMesa) VALUES (?, ?)
+            INSERT INTO mesas (numeroMesa, estadoMesa) VALUES (?, ?)
         `).run(numeroMesa, 'aberto')
         return { numeroMesa: Number(numeroMesa), estadoMesa:'aberto'}
     }
@@ -96,6 +96,11 @@ const app = new Elysia()
         estadoMesa: t.String()
     })
 })
+
+.get('/api/cardapio', () => {
+    return db.query('SELECT * FROM produtos').all();
+})
+
 .listen(3000)
 
 console.log('Elysia ativo')

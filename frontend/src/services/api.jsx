@@ -10,7 +10,7 @@ api.interceptors.request.use(
         const mesaSalva = localStorage.getItem('@Comanda:mesa');
         if(mesaSalva) {
             const dadosMesa = JSON.parse(mesaSalva)
-            config.headers[X-Mesa-Identificador]
+            config.headers['X-Mesa-Identificador']
         }
         return config;
     },
