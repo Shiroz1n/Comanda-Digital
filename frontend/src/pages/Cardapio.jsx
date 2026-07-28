@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Cards from "../components/Cards";
-import { Button } from "@base-ui/react";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetClose,
@@ -19,6 +19,7 @@ const Cardapio = () => {
   const [cardapio, setCardapio] = useState([]);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(true);
+  const [carrinho, setCarrinho] = useState([])
 
   useEffect(() => {
     const carregarCardapio = async () => {
@@ -36,10 +37,20 @@ const Cardapio = () => {
     console.log("Funcionando");
   }, []);
 
+  const adicionarAoCarrinho = (produtoNovo) => {
+    setCarrinho (prev => {
+      const existe = prev.find(item=> item.idProduto === produtoNovo.idProduto);
+      if(existe) {
+        return prev.map(item => item.idProduto === produtoNovo.idProduto ? {...item, qtd:item.qtd + 1}: item);
+      }
+      return [...prev, {...produtoNovo, qtd: 1}]
+    })
+  }
+
   return (
     <>
       <div>
-        <Tabs defaultValue="overview">
+        <Tabs defaultValue="Lanches">
           <TabsList variant="line">
             <TabsTrigger value="Lanches">LANCHES</TabsTrigger>
             <TabsTrigger value="Bebidas">BEBIDAS</TabsTrigger>
@@ -55,6 +66,7 @@ const Cardapio = () => {
                     nome={item.nomeProduto}
                     preco={item.preco}
                     imagem={item.imagem}
+                    botao={()=> adicionarAoCarrinho(item)}
                   ></Cards>
                 );
               })}
@@ -91,26 +103,34 @@ const Cardapio = () => {
         <Sheet>
           <SheetTrigger
             render={
-              <Button className="fixed z-50 bottom-5 right-6 cursor-pointer"></Button>
+              <Button className="fixed z-50 bottom-5 right-6 cursor-pointer">
+                <ShoppingCart></ShoppingCart> SUA COMANDA
+              </Button>
             }
           >
-            {" "}
-            <ShoppingCart></ShoppingCart> SUA COMANDA
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Are you absolutely sure?</SheetTitle>
               <SheetDescription>This action cannot be undone.</SheetDescription>
-              <div className="overflow-y-auto">
-
+              <div className="overflow-y-auto max-w">
+                  {carrinho.map((item) => (
+                    <div key={item.idProduto}>
+                      <img src={item.imagem} alt="" className=" h-2 w-2" />
+                      <p>{item.nomeProduto}</p>
+                      <span>{item.qtd}</span>
+                    </div>
+                  ))}
               </div>
             </SheetHeader>
-            <SheetFooter border-t w-full>
-              <div className="flex justify-between px-2">
+            <SheetFooter className="border-t w-full font-bold">
+              <div className="flex justify-between px-2 w-full">
                 <span>Total do pedido: </span>
                 <span className="text-emerald-600">R$</span>
               </div>
-              <Button className='cursor-pointer'></Button>
+              <Button className="cursor-pointer">
+                Enviar pedido para a cozinha
+              </Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
