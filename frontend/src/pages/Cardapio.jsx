@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "../services/api";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Cards from "../components/Cards";
@@ -19,7 +19,7 @@ const Cardapio = () => {
   const [cardapio, setCardapio] = useState([]);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(true);
-  const [carrinho, setCarrinho] = useState([])
+  const [carrinho, setCarrinho] = useState([]);
 
   useEffect(() => {
     const carregarCardapio = async () => {
@@ -37,15 +37,26 @@ const Cardapio = () => {
     console.log("Funcionando");
   }, []);
 
+  const valorTotal = useMemo(()=> {
+    return carrinho.reduce((soma, item)=> soma + (item.preco * item.qtd), 0);
+  }, [carrinho])
+
   const adicionarAoCarrinho = (produtoNovo) => {
-    setCarrinho (prev => {
-      const existe = prev.find(item=> item.idProduto === produtoNovo.idProduto);
-      if(existe) {
-        return prev.map(item => item.idProduto === produtoNovo.idProduto ? {...item, qtd:item.qtd + 1}: item);
+    setCarrinho((prev) => {
+      const existe = prev.find(
+        (item) => item.idProduto === produtoNovo.idProduto,
+      );
+      if (existe) {
+        return prev.map((item) =>
+          item.idProduto === produtoNovo.idProduto
+            ? { ...item, qtd: item.qtd + 1 }
+            : item,
+        );
       }
-      return [...prev, {...produtoNovo, qtd: 1}]
-    })
-  }
+      return [...prev, { ...produtoNovo, qtd: 1 }];
+    });
+  };
+
 
   return (
     <>
@@ -66,7 +77,7 @@ const Cardapio = () => {
                     nome={item.nomeProduto}
                     preco={item.preco}
                     imagem={item.imagem}
-                    botao={()=> adicionarAoCarrinho(item)}
+                    botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
                 );
               })}
@@ -107,26 +118,27 @@ const Cardapio = () => {
                 <ShoppingCart></ShoppingCart> SUA COMANDA
               </Button>
             }
-          >
-          </SheetTrigger>
+          ></SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Are you absolutely sure?</SheetTitle>
               <SheetDescription>This action cannot be undone.</SheetDescription>
               <div className="overflow-y-auto max-w">
-                  {carrinho.map((item) => (
-                    <div key={item.idProduto}>
-                      <img src={item.imagem} alt="" className=" h-2 w-2" />
+                {carrinho.map((item) => (
+                  <div key={item.idProduto} className="flex">
+                    <img src={item.imagem} alt="" className=" h-1 w-1" />
+                    <div>
                       <p>{item.nomeProduto}</p>
                       <span>{item.qtd}</span>
                     </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             </SheetHeader>
             <SheetFooter className="border-t w-full font-bold">
               <div className="flex justify-between px-2 w-full">
                 <span>Total do pedido: </span>
-                <span className="text-emerald-600">R$</span>
+                <span className="text-emerald-600">R${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </div>
               <Button className="cursor-pointer">
                 Enviar pedido para a cozinha
