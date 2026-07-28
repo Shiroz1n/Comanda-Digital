@@ -75,7 +75,7 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco}
+                    preco={item.preco.toLocaleString('pt-BR')}
                     imagem={item.imagem}
                     botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
@@ -90,8 +90,9 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco}
+                    preco={item.preco.toLocaleString('pt-BR')}
                     imagem={item.imagem}
+                    botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
                 );
               })}
@@ -104,8 +105,9 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco}
+                    preco={item.preco.toLocaleString('pt-BR')}
                     imagem={item.imagem}
+                    botao={()=> adicionarAoCarrinho(item)}
                   ></Cards>
                 );
               })}
