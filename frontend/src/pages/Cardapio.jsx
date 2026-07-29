@@ -14,12 +14,26 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { ShoppingCart } from "lucide-react";
+import { hookMesa } from "@/context/MesaProvider";
 
 const Cardapio = () => {
   const [cardapio, setCardapio] = useState([]);
   const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(true);
   const [carrinho, setCarrinho] = useState([]);
+  const [confirmacaoPendente, setConfirmacaoPendente] = useState(false);
+  const [online, setOnline] = useState(navigator.onLine);
+  const { estadoAtivo, limparDado } = hookMesa();
+
+  useEffect(() => {
+    const atualizarStatus = () => setOnline(navigator.onLine);
+    window.addEventListener("online", atualizarStatus);
+    window.addEventListener("offline", atualizarStatus);
+    return () => {
+      window.removeEventListener("online", atualizarStatus);
+      window.removeEventListener("offline", atualizarStatus);
+    };
+  }, []);
 
   useEffect(() => {
     const carregarCardapio = async () => {
@@ -37,9 +51,40 @@ const Cardapio = () => {
     console.log("Funcionando");
   }, []);
 
-  const valorTotal = useMemo(()=> {
-    return carrinho.reduce((soma, item)=> soma + (item.preco * item.qtd), 0);
-  }, [carrinho])
+  const valorTotal = useMemo(() => {
+    return carrinho.reduce((soma, item) => soma + item.preco * item.qtd, 0);
+  }, [carrinho]);
+
+  const executarAcaoCritica = async () => {
+    if (!online) {
+      alert("Voce esta offline");
+      return;
+    }
+    console.log("Dados que estou enviando:", {
+      numeroMesa: estadoAtivo,
+      total: valorTotal,
+      itens: carrinho,
+    });
+
+    const numeroMesaPura =
+      estadoAtivo?.numeroMesa ||
+      JSON.parse(localStorage.getItem("@Comanda:mesa"))?.numeroMesa ||
+      estadoAtivo;
+    try {
+      const resposta = await api.post("/pedidos", {
+        numeroMesa: String(numeroMesaPura),
+        total: valorTotal,
+        itens: carrinho,
+      });
+      setCarrinho([]);
+      limparDado();
+      setConfirmacaoPendente(false);
+      console.log("Pedido enviado com sucesso", resposta.data);
+    } catch (err) {
+      console.error("Erro capturado pelo axios");
+    } finally {
+    }
+  };
 
   const adicionarAoCarrinho = (produtoNovo) => {
     setCarrinho((prev) => {
@@ -57,10 +102,15 @@ const Cardapio = () => {
     });
   };
 
-
   return (
     <>
       <div>
+        {!online && (
+          <div>
+            ⚠️ Você está sem internet! Verifique sua conexão para enviar o
+            pedido.
+          </div>
+        )}
         <Tabs defaultValue="Lanches">
           <TabsList variant="line">
             <TabsTrigger value="Lanches">LANCHES</TabsTrigger>
@@ -75,7 +125,7 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco.toLocaleString('pt-BR')}
+                    preco={item.preco.toLocaleString("pt-BR")}
                     imagem={item.imagem}
                     botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
@@ -90,7 +140,7 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco.toLocaleString('pt-BR')}
+                    preco={item.preco.toLocaleString("pt-BR")}
                     imagem={item.imagem}
                     botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
@@ -105,9 +155,9 @@ const Cardapio = () => {
                   <Cards
                     key={item.idProduto}
                     nome={item.nomeProduto}
-                    preco={item.preco.toLocaleString('pt-BR')}
+                    preco={item.preco.toLocaleString("pt-BR")}
                     imagem={item.imagem}
-                    botao={()=> adicionarAoCarrinho(item)}
+                    botao={() => adicionarAoCarrinho(item)}
                   ></Cards>
                 );
               })}
@@ -140,9 +190,15 @@ const Cardapio = () => {
             <SheetFooter className="border-t w-full font-bold">
               <div className="flex justify-between px-2 w-full">
                 <span>Total do pedido: </span>
-                <span className="text-emerald-600">R${valorTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span className="text-emerald-600">
+                  R$
+                  {valorTotal.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
               </div>
-              <Button className="cursor-pointer">
+              <Button onClick={executarAcaoCritica} className="cursor-pointer">
                 Enviar pedido para a cozinha
               </Button>
             </SheetFooter>
